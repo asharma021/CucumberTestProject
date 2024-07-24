@@ -20,10 +20,10 @@ public class DatabaseUtil {
         return connection;
     }
 
-    public static int getRowCount(String tableName) throws Exception {
+    public static int getRowCountWithQuery(String query) throws Exception {
         Connection conn = connect();
         Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM " + tableName);
+        ResultSet rs = stmt.executeQuery(query);
         rs.next();
         return rs.getInt(1);
     }
