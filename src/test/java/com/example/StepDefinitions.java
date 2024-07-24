@@ -68,4 +68,16 @@ public class StepDefinitions {
         assertEquals(counts.get("databaseRowCount"), counts.get("excelRowCount"));
         LOGGER.info("Row counts match: " + counts.get("databaseRowCount"));
     }
+
+    @When("I extract the total count")
+    public void iExtractTheTotalCount() {
+        // Locate the element using XPath
+        WebElement countElement = driver.findElement(By.xpath("//*[eid='mat-tab-content-1-0']/div/app-summary-list/div[3]/div[3]"));
+
+        // Extract the text from the element
+        String countText = countElement.getText();
+
+        // Print the extracted text
+        System.out.println("Total count: " + countText);
+    }
 }
