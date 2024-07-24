@@ -22,9 +22,10 @@ public class StepDefinitions {
         DatabaseUtil.connect();
     }
 
-    @When("I fetch the row count from the table {string}")
-    public void iFetchTheRowCountFromTheTable(String tableName) throws Exception {
-        int rowCount = DatabaseUtil.getRowCount(tableName);
+    @When("I fetch the row count from the table with the specified query")
+    public void iFetchTheRowCountFromTheTable() throws Exception {
+        String query = "SELECT COUNT(*) FROM P_QSCORE_RT_MNTHLY_DO_GBL_GROUP WHERE as_of_date = '2023-05-31'";
+        int rowCount = DatabaseUtil.getRowCountWithQuery(query);
         counts.put("databaseRowCount", rowCount);
     }
 
@@ -37,7 +38,7 @@ public class StepDefinitions {
     public void iOpenTheExcelFile(String filePath) throws Exception {
         FileInputStream file = new FileInputStream(new File(filePath));
         Workbook workbook = WorkbookFactory.create(file);
-        counts.put("excelRowCount", workbook.getSheetAt(0).getLastRowNum());
+        counts.put("excelRowCount", workbook.getSheetAt(0).getLastRowNum() + 1);
         workbook.close();
         file.close();
     }
