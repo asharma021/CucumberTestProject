@@ -1,15 +1,20 @@
-package com.example;
+package fast.common.glue;
 
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
@@ -17,15 +22,42 @@ import static org.junit.Assert.assertEquals;
 public class StepDefinitions {
     private static Map<String, Integer> counts = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(StepDefinitions.class.getName());
+    private String downloadDir = System.getProperty("user.home") + "/downloads";
+    private String asOfDate;
 
     @Given("I connect to the Oracle database")
     public void iConnectToTheOracleDatabase() throws Exception {
         DatabaseUtil.connect();
     }
 
+    @Given("I open the first Excel file in the downloads folder and read AS_OF_DATE")
+    public void iOpenTheFirstExcelFileInTheDownloadsFolder() throws Exception {
+        File folder = new File(downloadDir);
+        File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
+        if (files != null && files.length > 0) {
+            File file = files[0];
+            try (FileInputStream fis = new FileInputStream(file);
+                 Workbook workbook = WorkbookFactory.create(fis)) {
+                // Assuming AS_OF_DATE is in the first row, first column
+                Row row = workbook.getSheetAt(0).getRow(0);
+                Cell cell = row.getCell(0);
+                Date date = cell.getDateCellValue();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                asOfDate = dateFormat.format(date);
+
+                int rowCount = workbook.getSheetAt(0).getLastRowNum();
+                counts.put("excelRowCount", rowCount);
+                LOGGER.info("Excel row count: " + rowCount);
+                LOGGER.info("AS_OF_DATE: " + asOfDate);
+            }
+        } else {
+            LOGGER.warning("No Excel files found in the downloads folder");
+        }
+    }
+
     @When("I fetch the row count from the table with the specified query")
     public void iFetchTheRowCountFromTheTable() throws Exception {
-        String query = "SELECT COUNT(*) FROM P_QSCORE_RT_MNTHLY_DO_GBL_GROUP WHERE as_of_date = '2023-05-31'";
+        String query = "SELECT COUNT(*) FROM P_QSCORE_WS_OUT_MNTHLY_DQ_GBL_GROUP WHERE as_of_date = '" + asOfDate + "'";
         int rowCount = DatabaseUtil.getRowCountWithQuery(query);
         counts.put("databaseRowCount", rowCount);
         LOGGER.info("Database row count: " + rowCount);
@@ -34,23 +66,6 @@ public class StepDefinitions {
     @Then("I save the row count as {string}")
     public void iSaveTheRowCountAs(String countName) {
         // Already saved during fetching
-    }
-
-    @Given("I open the first Excel file in the downloads folder")
-    public void iOpenTheFirstExcelFileInTheDownloadsFolder() throws Exception {
-        File folder = new File(downloadDir);
-        File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
-        if (files != null && files.length > 0) {
-            File file = files[0];
-            try (FileInputStream fis = new FileInputStream(file);
-                 Workbook workbook = WorkbookFactory.create(fis)) {
-                int rowCount = workbook.getSheetAt(0).getLastRowNum();
-                counts.put("excelRowCount", rowCount);
-                LOGGER.info("Excel row count: " + rowCount);
-            }
-        } else {
-            LOGGER.warning("No Excel files found in the downloads folder");
-        }
     }
 
     @When("I get the row count from the Excel file")
@@ -74,15 +89,17 @@ public class StepDefinitions {
         LOGGER.info("Row counts match: " + counts.get("databaseRowCount"));
     }
 
-    @When("I extract the total count")
-    public void iExtractTheTotalCount() {
-        // Locate the element using XPath
-        WebElement countElement = driver.findElement(By.xpath("//*[eid='mat-tab-content-1-0']/div/app-summary-list/div[3]/div[3]"));
+    @Given("the download folder is cleaned")
+    public void cleanDownloadFolder() {
+        File folder = new File(downloadDir);
+        File[] files = folder.listFiles();
+        if (files != null) {
+            Arrays.stream(files).forEach(File::delete);
+        }
+    }
 
-        // Extract the text from the element
-        String countText = countElement.getText();
-
-        // Print the extracted text
-        System.out.println("Total count: " + countText);
+    @Then("I clean up the downloads folder")
+    public void iCleanUptheDownloadsFolder() {
+        FileUtility.cleanDownloadsFolder(downloadDir);
     }
 }
