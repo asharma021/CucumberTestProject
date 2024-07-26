@@ -36,7 +36,14 @@ public class StepDefinitions {
                  Workbook workbook = WorkbookFactory.create(fis)) {
                 Sheet sheet = workbook.getSheetAt(0);
 
-                // Directly read the date from cell A2 (first column of the second row)
+                // Check if the first row contains the header "AS_OF_DATE"
+                Row headerRow = sheet.getRow(0);
+                Cell headerCell = headerRow.getCell(0);
+                if (!"AS_OF_DATE".equalsIgnoreCase(headerCell.getStringCellValue().trim())) {
+                    throw new RuntimeException("AS_OF_DATE column not found in the Excel file");
+                }
+
+                // Read the date from the first column of the second row
                 Row dateRow = sheet.getRow(1);
                 if (dateRow == null) {
                     throw new RuntimeException("The second row is not found in the Excel file");
@@ -46,27 +53,17 @@ public class StepDefinitions {
                     throw new RuntimeException("The cell in the first column of the second row is not found in the Excel file");
                 }
 
-                // Check the cell type and get the value accordingly
-                switch (dateCell.getCellType()) {
-                    case STRING:
-                        asOfDate = dateCell.getStringCellValue();
-                        break;
-                    case NUMERIC:
-                        if (DateUtil.isCellDateFormatted(dateCell)) {
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                            asOfDate = dateFormat.format(dateCell.getDateCellValue());
-                        } else {
-                            throw new RuntimeException("The AS_OF_DATE cell is numeric but not a date");
-                        }
-                        break;
-                    default:
-                        throw new RuntimeException("The AS_OF_DATE cell is not of expected type (STRING or NUMERIC)");
+                // Assuming the date is in the format yyyy-MM-dd
+                if (dateCell.getCellType() == CellType.STRING) {
+                    asOfDate = dateCell.getStringCellValue();
+                } else if (dateCell.getCellType() == CellType.NUMERIC) {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    asOfDate = dateFormat.format(dateCell.getDateCellValue());
+                } else {
+                    throw new RuntimeException("AS_OF_DATE cell type is not supported");
                 }
 
-                if (asOfDate == null || asOfDate.isEmpty()) {
-                    throw new RuntimeException("The AS_OF_DATE value is null or empty");
-                }
-
+                // Get the row count excluding the header row
                 int rowCount = sheet.getLastRowNum();
                 counts.put("excelRowCount", rowCount);
                 LOGGER.info("Excel row count: " + rowCount);
