@@ -65,6 +65,13 @@ public class StepDefinitions {
         counts.put("databaseRowCount", rowCount);
         LOGGER.info("Database row count: " + rowCount);
     }
+    @When("I fetch the row count from the table with the specified query")
+    public void iFetchTheRowCountFromTheTable() throws Exception {
+        String query = "SELECT COUNT(*) FROM P_QSCORE_WS_OUT_MNTHLY_DQ_GBL_GROUP WHERE as_of_date = '" + asOfDate + "'";
+        int rowCount = DatabaseUtil.getRowCountWithQuery(query);
+        counts.put("databaseRowCount", rowCount);
+        LOGGER.info("Database row count: " + rowCount);
+    }
 
     @Then("I save the row count as {string}")
     public void iSaveTheRowCountAs(String countName) {
