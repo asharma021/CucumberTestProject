@@ -25,43 +25,21 @@ public class StepDefinitions {
         DatabaseUtil.connect();
     }
 
-
     @Given("I open the first Excel file in the downloads folder and read AS_OF_DATE")
     public void iOpenTheFirstExcelFileInTheDownloadsFolder() throws Exception {
         File folder = new File(downloadDir);
         File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
         if (files != null && files.length > 0) {
             File file = files[0];
+            // Extract date from the file name
+            String fileName = file.getName();
+            String[] parts = fileName.split("_");
+            String datePart = parts[parts.length - 1].replace(".xlsx", "");
+            asOfDate = datePart;
+
             try (FileInputStream fis = new FileInputStream(file);
                  Workbook workbook = WorkbookFactory.create(fis)) {
                 Sheet sheet = workbook.getSheetAt(0);
-
-                // Check if the first row contains the header "AS_OF_DATE"
-                Row headerRow = sheet.getRow(0);
-                Cell headerCell = headerRow.getCell(0);
-                if (!"AS_OF_DATE".equalsIgnoreCase(headerCell.getStringCellValue().trim())) {
-                    throw new RuntimeException("AS_OF_DATE column not found in the Excel file");
-                }
-
-                // Read the date from the first column of the second row
-                Row dateRow = sheet.getRow(1);
-                if (dateRow == null) {
-                    throw new RuntimeException("The second row is not found in the Excel file");
-                }
-                Cell dateCell = dateRow.getCell(0);
-                if (dateCell == null) {
-                    throw new RuntimeException("The cell in the first column of the second row is not found in the Excel file");
-                }
-
-                // Assuming the date is in the format yyyy-MM-dd
-                if (dateCell.getCellType() == CellType.STRING) {
-                    asOfDate = dateCell.getStringCellValue();
-                } else if (dateCell.getCellType() == CellType.NUMERIC) {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    asOfDate = dateFormat.format(dateCell.getDateCellValue());
-                } else {
-                    throw new RuntimeException("AS_OF_DATE cell type is not supported");
-                }
 
                 // Get the row count excluding the header row
                 int rowCount = sheet.getLastRowNum();
@@ -74,13 +52,6 @@ public class StepDefinitions {
         }
     }
 
-    @When("I fetch the row count from the table with the specified query")
-    public void iFetchTheRowCountFromTheTable() throws Exception {
-        String query = "SELECT COUNT(*) FROM P_QSCORE_WS_OUT_MNTHLY_DQ_GBL_GROUP WHERE as_of_date = '" + asOfDate + "'";
-        int rowCount = DatabaseUtil.getRowCountWithQuery(query);
-        counts.put("databaseRowCount", rowCount);
-        LOGGER.info("Database row count: " + rowCount);
-    }
     @When("I fetch the row count from the table with the specified query")
     public void iFetchTheRowCountFromTheTable() throws Exception {
         String query = "SELECT COUNT(*) FROM P_QSCORE_WS_OUT_MNTHLY_DQ_GBL_GROUP WHERE as_of_date = '" + asOfDate + "'";
