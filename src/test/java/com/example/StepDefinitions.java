@@ -36,8 +36,8 @@ public class StepDefinitions {
         // Already saved during fetching
     }
 
-    @Given("I open the Excel file {string}")
-    public void iOpenTheExcelFile(String filePath) throws Exception {
+    @Given("I open the first Excel file in the downloads folder")
+    public void iOpenTheFirstExcelFileInTheDownloadsFolder() throws Exception {
         File folder = new File(downloadDir);
         File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
         if (files != null && files.length > 0) {
