@@ -45,8 +45,19 @@ public class StepDefinitions {
                     throw new RuntimeException("The cell in the first column of the second row is not found in the Excel file");
                 }
 
-                // Assuming the date is in the format yyyy-MM-dd
-                asOfDate = dateCell.getStringCellValue();
+                // Check the cell type and get the value accordingly
+                if (dateCell.getCellType() == CellType.STRING) {
+                    asOfDate = dateCell.getStringCellValue();
+                } else if (dateCell.getCellType() == CellType.NUMERIC) {
+                    // Assuming the date is in numeric format and needs to be formatted
+                    asOfDate = new SimpleDateFormat("yyyy-MM-dd").format(dateCell.getDateCellValue());
+                } else {
+                    throw new RuntimeException("The AS_OF_DATE cell is not of expected type (STRING or NUMERIC)");
+                }
+
+                if (asOfDate == null || asOfDate.isEmpty()) {
+                    throw new RuntimeException("The AS_OF_DATE value is null or empty");
+                }
 
                 int rowCount = sheet.getLastRowNum();
                 counts.put("excelRowCount", rowCount);
