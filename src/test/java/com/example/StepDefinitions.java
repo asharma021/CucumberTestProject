@@ -38,14 +38,19 @@ public class StepDefinitions {
 
     @Given("I open the Excel file {string}")
     public void iOpenTheExcelFile(String filePath) throws Exception {
-        FileInputStream file = new FileInputStream(new File(filePath));
-        Workbook workbook = WorkbookFactory.create(file);
-        // Adjusting row count to skip the first row
-        int rowCount = workbook.getSheetAt(0).getLastRowNum();
-        counts.put("excelRowCount", rowCount);
-        LOGGER.info("Excel row count: " + rowCount);
-        workbook.close();
-        file.close();
+        File folder = new File(downloadDir);
+        File[] files = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
+        if (files != null && files.length > 0) {
+            File file = files[0];
+            try (FileInputStream fis = new FileInputStream(file);
+                 Workbook workbook = WorkbookFactory.create(fis)) {
+                int rowCount = workbook.getSheetAt(0).getLastRowNum();
+                counts.put("excelRowCount", rowCount);
+                LOGGER.info("Excel row count: " + rowCount);
+            }
+        } else {
+            LOGGER.warning("No Excel files found in the downloads folder");
+        }
     }
 
     @When("I get the row count from the Excel file")
