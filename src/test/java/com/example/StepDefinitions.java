@@ -10,9 +10,9 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -41,9 +41,10 @@ public class StepDefinitions {
                 // Assuming AS_OF_DATE is in the first row, first column
                 Row row = workbook.getSheetAt(0).getRow(0);
                 Cell cell = row.getCell(0);
-                Date date = cell.getDateCellValue();
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                asOfDate = dateFormat.format(date);
+                String dateStr = cell.getStringCellValue();
+                SimpleDateFormat inputFormat = new SimpleDateFormat("MM/dd/yyyy"); // Adjust according to your format
+                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
+                asOfDate = outputFormat.format(inputFormat.parse(dateStr));
 
                 int rowCount = workbook.getSheetAt(0).getLastRowNum();
                 counts.put("excelRowCount", rowCount);
