@@ -3,14 +3,10 @@ package fast.common.glue;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.usermodel.*;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,15 +34,24 @@ public class StepDefinitions {
             File file = files[0];
             try (FileInputStream fis = new FileInputStream(file);
                  Workbook workbook = WorkbookFactory.create(fis)) {
-                // Assuming AS_OF_DATE is in the first row, first column
-                Row row = workbook.getSheetAt(0).getRow(0);
-                Cell cell = row.getCell(0);
-                String dateStr = cell.getStringCellValue();
+                Sheet sheet = workbook.getSheetAt(0);
+
+                // Assuming AS_OF_DATE is in the first column
+                Row headerRow = sheet.getRow(0);
+                Cell headerCell = headerRow.getCell(0);
+                if (!"AS_OF_DATE".equals(headerCell.getStringCellValue())) {
+                    throw new RuntimeException("AS_OF_DATE column not found in the Excel file");
+                }
+
+                // Read the date from the cell below the header
+                Row dateRow = sheet.getRow(1);
+                Cell dateCell = dateRow.getCell(0);
+                String dateStr = dateCell.getStringCellValue();
                 SimpleDateFormat inputFormat = new SimpleDateFormat("MM/dd/yyyy"); // Adjust according to your format
                 SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
                 asOfDate = outputFormat.format(inputFormat.parse(dateStr));
 
-                int rowCount = workbook.getSheetAt(0).getLastRowNum();
+                int rowCount = sheet.getLastRowNum();
                 counts.put("excelRowCount", rowCount);
                 LOGGER.info("Excel row count: " + rowCount);
                 LOGGER.info("AS_OF_DATE: " + asOfDate);
