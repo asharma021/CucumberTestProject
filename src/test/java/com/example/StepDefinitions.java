@@ -25,6 +25,7 @@ public class StepDefinitions {
         DatabaseUtil.connect();
     }
 
+
     @Given("I open the first Excel file in the downloads folder and read AS_OF_DATE")
     public void iOpenTheFirstExcelFileInTheDownloadsFolder() throws Exception {
         File folder = new File(downloadDir);
@@ -45,8 +46,26 @@ public class StepDefinitions {
                     throw new RuntimeException("The cell in the first column of the second row is not found in the Excel file");
                 }
 
-                // Assuming the date is in the format yyyy-MM-dd
-                asOfDate = dateCell.getStringCellValue();
+                // Check the cell type and get the value accordingly
+                switch (dateCell.getCellType()) {
+                    case STRING:
+                        asOfDate = dateCell.getStringCellValue();
+                        break;
+                    case NUMERIC:
+                        if (DateUtil.isCellDateFormatted(dateCell)) {
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                            asOfDate = dateFormat.format(dateCell.getDateCellValue());
+                        } else {
+                            throw new RuntimeException("The AS_OF_DATE cell is numeric but not a date");
+                        }
+                        break;
+                    default:
+                        throw new RuntimeException("The AS_OF_DATE cell is not of expected type (STRING or NUMERIC)");
+                }
+
+                if (asOfDate == null || asOfDate.isEmpty()) {
+                    throw new RuntimeException("The AS_OF_DATE value is null or empty");
+                }
 
                 int rowCount = sheet.getLastRowNum();
                 counts.put("excelRowCount", rowCount);
