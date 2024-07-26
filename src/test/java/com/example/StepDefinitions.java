@@ -54,11 +54,12 @@ public class StepDefinitions {
 
     @When("I fetch the row count from the table with the specified query")
     public void iFetchTheRowCountFromTheTable() throws Exception {
-        String query = "SELECT COUNT(*) FROM P_QSCORE_WS_OUT_MNTHLY_DQ_GBL_GROUP WHERE as_of_date = '" + asOfDate + "'";
+        String query = "SELECT COUNT(*) FROM P_QSCORE_RT_MNTHLY_DO_GBL_GROUP WHERE as_of_date = '2023-05-31'";
         int rowCount = DatabaseUtil.getRowCountWithQuery(query);
         counts.put("databaseRowCount", rowCount);
         LOGGER.info("Database row count: " + rowCount);
     }
+
 
     @Then("I save the row count as {string}")
     public void iSaveTheRowCountAs(String countName) {
